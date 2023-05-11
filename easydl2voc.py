@@ -75,7 +75,7 @@ def EasyDL2VOC(input_dir, input_json, output_dir, img_name):
     shutil.copy(os.path.join(os.path.join(input_dir, IMAGE_SUB_DIR), img_name), os.path.join(os.path.join(output_dir, IMAGE_SUB_DIR), img_name))
 
 
-def extract_dataset(easydl_dataset_dir):
+def extract_dataset(easydl_dataset_dir, img_type='.jpeg'):
     dir_p = easydl_dataset_dir
     save_dir_p = 'temp_dataset'
     img_dir = os.path.join(save_dir_p, 'JPEGImages')
@@ -94,7 +94,7 @@ def extract_dataset(easydl_dataset_dir):
                 anno_path = os.path.join(anno_dir, f)
                 shutil.copy(f_, anno_path)
             else:
-                img_path = os.path.join(img_dir, f)
+                img_path = os.path.join(img_dir, f.split('.')[0]+img_type)
                 shutil.copy(f_, img_path)
         break
 
@@ -131,7 +131,7 @@ def create_voc_list(dataset_dir, img_files, train_ratio=0.7):
                         label_list.add(cls_name)
                     
                     t_f.write(
-                        os.path.join('JEPGImages', _img) + ' ' + \
+                        os.path.join('JPEGImages', _img) + ' ' + \
                         os.path.join('Annotations', _img.split('.')[0]+'.xml') + '\n'
                     )
                 print("Info: Select Train Sample: {0}.".format(_cnt))
@@ -146,7 +146,7 @@ def create_voc_list(dataset_dir, img_files, train_ratio=0.7):
                     label_list.add(cls_name)
                 
                 e_f.write(
-                    os.path.join('JEPGImages', _img) + ' ' + \
+                    os.path.join('JPEGImages', _img) + ' ' + \
                     os.path.join('Annotations', _img.split('.')[0]+'.xml') + '\n'
                 )
             print("Info: Select Eval Sample: {0}.".format(len(img_files)-_train_size))
@@ -156,7 +156,7 @@ def create_voc_list(dataset_dir, img_files, train_ratio=0.7):
 
 
 
-def generate_from_easydl_to_voc(easydl_dataset_dir, output_dir='voc_dataset', train_ratio=0.85):
+def generate_from_easydl_to_voc(easydl_dataset_dir, output_dir='voc_dataset', train_ratio=0.85, extract_img_type='.jpeg'):
     """指定easydl数据集目录, 生成指定VOC格式数据集到输出目录下
         easydl_dataset_dir --> output_dir
             |- Annotations
@@ -166,7 +166,7 @@ def generate_from_easydl_to_voc(easydl_dataset_dir, output_dir='voc_dataset', tr
             |- eval_list.txt
     """
     output_dir = output_dir
-    extract_dataset(easydl_dataset_dir)
+    extract_dataset(easydl_dataset_dir, img_type=extract_img_type)
     input_dir = 'temp_dataset'
 
     print("\nStart Parse EasyDL Dataset to Voc Dataset!")
@@ -178,9 +178,7 @@ def generate_from_easydl_to_voc(easydl_dataset_dir, output_dir='voc_dataset', tr
         break
     print("End Load Annotations To Parse.")
     print("\nStart Load JPEGImages To Parse.")
-    for _, _, files in os.walk('temp_dataset/JPEGImages'):
-        img_files += files
-        break
+    img_files = [ i.split('.')[0]+extract_img_type for i in anno_files ]
     print("End Load JPEGImages To Parse.")
 
     if not os.path.exists(output_dir):
